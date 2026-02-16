@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'counter_controller.dart';
+import 'package:logbook_app_088/features/onboarding/onboarding_view.dart'; 
 
 class CounterView extends StatefulWidget {
-  const CounterView({super.key});
+  final String username;
+
+  const CounterView({super.key, required this.username});
 
   @override
   State<CounterView> createState() => _CounterViewState();
@@ -18,7 +21,6 @@ class _CounterViewState extends State<CounterView> {
     super.dispose();
   }
 
-  // Fungsi konfirmasi reset
   Future<void> _confirmReset() async {
     final bool? confirmed = await showDialog<bool>(
       context: context,
@@ -53,7 +55,35 @@ class _CounterViewState extends State<CounterView> {
     }
   }
 
-  // Fungsi warna riwayat
+  Future<void> _confirmLogout() async {
+    final bool? confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Konfirmasi Logout', style: TextStyle(color: Colors.deepPurple)),
+        content: const Text('Yakin ingin logout?\nAnda akan kembali ke onboarding.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Batal', style: TextStyle(color: Colors.grey)),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Ya, Logout', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true && mounted) {
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (context) => const OnboardingView()),
+        (route) => false, 
+      );
+    }
+  }
+
   Color _getHistoryColor(String entry) {
     final lower = entry.toLowerCase();
     if (lower.contains('menambah')) return Colors.green[700]!;
@@ -66,7 +96,7 @@ class _CounterViewState extends State<CounterView> {
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
-        title: const Text("LogBook Counter"),
+        title: Text("LogBook Counter - ${widget.username}"), 
         elevation: 0,
         backgroundColor: Colors.transparent,
         foregroundColor: Colors.white,
@@ -79,6 +109,13 @@ class _CounterViewState extends State<CounterView> {
             ),
           ),
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout),
+            onPressed: _confirmLogout, 
+            tooltip: 'Logout',
+          ),
+        ],
       ),
       body: Container(
         decoration: BoxDecoration(
@@ -95,6 +132,17 @@ class _CounterViewState extends State<CounterView> {
               padding: const EdgeInsets.symmetric(horizontal: 20.0),
               child: Column(
                 children: [
+                  const SizedBox(height: 20),
+
+                  Text(
+                    "Selamat Datang, ${widget.username}!",
+                    style: const TextStyle(
+                      fontSize: 26,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.deepPurple,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
                   const SizedBox(height: 20),
 
                   Card(
@@ -191,7 +239,6 @@ class _CounterViewState extends State<CounterView> {
 
                   const SizedBox(height: 40),
 
-                  // Riwayat
                   const Text(
                     "Riwayat Aktivitas",
                     style: TextStyle(
