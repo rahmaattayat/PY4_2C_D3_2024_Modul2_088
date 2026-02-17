@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'counter_controller.dart';
-import 'package:logbook_app_088/features/onboarding/onboarding_view.dart'; 
+import 'package:logbook_app_088/features/onboarding/onboarding_view.dart';
 
 class CounterView extends StatefulWidget {
   final String username;
@@ -14,6 +14,22 @@ class CounterView extends StatefulWidget {
 class _CounterViewState extends State<CounterView> {
   final CounterController _controller = CounterController();
   final TextEditingController _stepController = TextEditingController(text: '1');
+
+  late String _currentUsername;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentUsername = widget.username;
+    _loadData();
+  }
+
+  Future<void> _loadData() async {
+    await _controller.load(_currentUsername);
+    if (mounted) {
+      setState(() {});
+    }
+  }
 
   @override
   void dispose() {
@@ -43,15 +59,18 @@ class _CounterViewState extends State<CounterView> {
 
     if (confirmed == true && mounted) {
       setState(() => _controller.reset());
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Counter berhasil direset!'),
-          duration: const Duration(seconds: 2),
-          backgroundColor: Colors.deepPurple,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        ),
-      );
+
+      if (mounted) { 
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Counter berhasil direset!'),
+            duration: const Duration(seconds: 2),
+            backgroundColor: Colors.deepPurple,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          ),
+        );
+      }
     }
   }
 
@@ -79,7 +98,7 @@ class _CounterViewState extends State<CounterView> {
       Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(builder: (context) => const OnboardingView()),
-        (route) => false, 
+        (route) => false,
       );
     }
   }
@@ -96,7 +115,7 @@ class _CounterViewState extends State<CounterView> {
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
-        title: Text("LogBook Counter - ${widget.username}"), 
+        title: Text("LogBook Counter - ${widget.username}"),
         elevation: 0,
         backgroundColor: Colors.transparent,
         foregroundColor: Colors.white,
@@ -112,7 +131,7 @@ class _CounterViewState extends State<CounterView> {
         actions: [
           IconButton(
             icon: const Icon(Icons.logout),
-            onPressed: _confirmLogout, 
+            onPressed: _confirmLogout,
             tooltip: 'Logout',
           ),
         ],
@@ -202,7 +221,10 @@ class _CounterViewState extends State<CounterView> {
                         if (value.isNotEmpty) {
                           int? newStep = int.tryParse(value);
                           if (newStep != null && newStep >= 1) {
-                            _controller.setStep(newStep);
+                            setState(() {
+                              _controller.setStep(newStep);
+                            });
+                            _controller.save(_currentUsername);
                           }
                         }
                       },
@@ -217,7 +239,12 @@ class _CounterViewState extends State<CounterView> {
                       FloatingActionButton(
                         heroTag: 'decrement',
                         backgroundColor: Colors.redAccent,
-                        onPressed: () => setState(() => _controller.decrement()),
+                        onPressed: () {
+                          setState(() {
+                            _controller.decrement();
+                          });
+                          _controller.save(_currentUsername);
+                        },
                         child: const Icon(Icons.remove, size: 32),
                       ),
                       const SizedBox(width: 24),
@@ -231,7 +258,12 @@ class _CounterViewState extends State<CounterView> {
                       FloatingActionButton(
                         heroTag: 'increment',
                         backgroundColor: Colors.greenAccent.shade700,
-                        onPressed: () => setState(() => _controller.increment()),
+                        onPressed: () {
+                          setState(() {
+                            _controller.increment();
+                          });
+                          _controller.save(_currentUsername);
+                        },
                         child: const Icon(Icons.add, size: 32),
                       ),
                     ],
