@@ -14,22 +14,40 @@ class _LoginViewState extends State<LoginView> {
   final TextEditingController _userController = TextEditingController();
   final TextEditingController _passController = TextEditingController();
 
-  void _handleLogin() {
-    String user = _userController.text;
-    String pass = _passController.text;
+  bool _obscurePassword = true; 
+  String? _errorMessage; 
 
-    bool isSuccess = _controller.login(user, pass);
+  void _handleLogin() {
+    setState(() {
+      _errorMessage = null; 
+    });
+
+    final username = _userController.text.trim();
+    final password = _passController.text;
+
+    final isSuccess = _controller.login(username, password);
 
     if (isSuccess) {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (context) => CounterView(username: user),
+          builder: (context) => CounterView(username: username),
         ),
       );
     } else {
+      setState(() {
+        if (username.isEmpty || password.isEmpty) {
+          _errorMessage = "Username dan password tidak boleh kosong!";
+        } else {
+          _errorMessage = "Username atau password salah!";
+        }
+      });
+
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Login Gagal! Gunakan admin/123")),
+        SnackBar(
+          content: Text(_errorMessage ?? "Login Gagal!"),
+          backgroundColor: Colors.red,
+        ),
       );
     }
   }
@@ -46,13 +64,38 @@ class _LoginViewState extends State<LoginView> {
               controller: _userController,
               decoration: const InputDecoration(labelText: "Username"),
             ),
+            const SizedBox(height: 16),
             TextField(
               controller: _passController,
-              obscureText: true,
-              decoration: const InputDecoration(labelText: "Password"),
+              obscureText: _obscurePassword,
+              decoration: InputDecoration(
+                labelText: "Password",
+                suffixIcon: IconButton(
+                  icon: Icon(
+                    _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                  ),
+                  onPressed: () {
+                    setState(() {
+                      _obscurePassword = !_obscurePassword;
+                    });
+                  },
+                ),
+              ),
             ),
+            if (_errorMessage != null) ...[
+              const SizedBox(height: 8),
+              Text(
+                _errorMessage!,
+                style: const TextStyle(color: Colors.red),
+              ),
+            ],
             const SizedBox(height: 20),
-            ElevatedButton(onPressed: _handleLogin, child: const Text("Masuk")),
+            ElevatedButton(
+              onPressed: _controller.isBlocked ? null : _handleLogin,
+              child: _controller.isBlocked
+                  ? const Text("Tunggu 10 detik...")
+                  : const Text("Masuk"),
+            ),
           ],
         ),
       ),
